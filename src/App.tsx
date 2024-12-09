@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ChartSelector } from './components/ChartSelector';
 import { StockChart } from './components/StockChart';
+import { OptionsChart } from './components/OptionsChart';
 import { SearchForm } from './components/SearchForm';
 import { useStockData } from './hooks/useStockData';
 import { ChartType } from './types/market';
@@ -20,7 +21,9 @@ function App() {
     if (!candleData?.t) return [];
     return candleData.t.map((timestamp: number, index: number) => ({
       date: format(new Date(timestamp * 1000), 'MM/dd/yyyy'),
-      value: candleData.c[index] || 0
+      value: candleData.c[index] || 0,
+      x: index,
+      y: candleData.c[index] || 0
     }));
   }, [candleData]);
 
@@ -74,6 +77,7 @@ function App() {
             <div>
               <ChartSelector activeChart={chartType} onChartChange={setChartType} />
               <StockChart data={chartData} type={chartType} />
+              <OptionsChart symbol={symbol} />
             </div>
           )}
         </div>
