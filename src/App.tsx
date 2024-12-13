@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ChartSelector } from './components/ChartSelector';
 import { StockChart } from './components/StockChart';
-import { OptionsChart } from './components/OptionsChart';
 import { SearchForm } from './components/SearchForm';
 import { useStockData } from './hooks/useStockData';
 import { ChartType } from './types/market';
 import { LineChart } from 'lucide-react';
+import { OptionsSelector } from './components/OptionsSelector';
 
 function App() {
   const [symbol, setSymbol] = useState('');
@@ -77,7 +77,10 @@ function App() {
             <div>
               <ChartSelector activeChart={chartType} onChartChange={setChartType} />
               <StockChart data={chartData} type={chartType} />
-              <OptionsChart symbol={symbol} />
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold mb-4">Options Analysis</h3>
+                <OptionsSelector symbol={symbol} />
+              </div>
             </div>
           )}
         </div>

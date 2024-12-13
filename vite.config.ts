@@ -14,6 +14,13 @@ export default defineConfig({
   server: {
     port: 3000,
     strictPort: true, // Don't automatically try other ports
-    host: true
+    host: true,
+    proxy: {
+      '/api/thetadata': {
+        target: 'http://localhost:25510',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/thetadata/, '/v2'),
+      },
+    },
   }
 });
