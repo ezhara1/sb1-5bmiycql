@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOptionsSelection } from '../hooks/useOptionsSelection';
 import { format, subDays } from 'date-fns';
+import { OptionPriceCharts } from './OptionPriceCharts';
+import { ChevronDown } from 'lucide-react';
 
 interface OptionsSelectorProps {
   symbol: string;
@@ -37,6 +39,8 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
     endDate
   });
 
+  const [isPriceExpanded, setIsPriceExpanded] = useState(false);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -45,50 +49,55 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
     <div className="space-y-4">
       {/* Step 1: Expiration Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Step 1: Select Expiration Date
         </label>
-        <select
-          value={selectedExpiration || ''}
-          onChange={(e) => selectExpiration(e.target.value || null)}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-        >
-          <option value="">Choose an expiration date</option>
-          {console.log('Rendering expiration options:', expirations)}
+        <div className="flex flex-wrap gap-2">
           {expirations && expirations.length > 0 ? (
             expirations.map((exp) => (
-              <option key={exp} value={exp}>
-                {exp}
-              </option>
+              <button
+                key={exp}
+                onClick={() => selectExpiration(exp)}
+                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                  selectedExpiration === exp
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {format(new Date(exp), 'MMM d, yyyy')}
+              </button>
             ))
           ) : (
-            <option value="" disabled>No expiration dates available</option>
+            <div className="text-sm text-gray-500">No expiration dates available</div>
           )}
-        </select>
+        </div>
       </div>
 
-      {/* Step 2: Strike Selection (only shown after expiration is selected) */}
+      {/* Step 2: Strike Selection */}
       {selectedExpiration && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Step 2: Select Strike Price
           </label>
-          <select
-            value={selectedStrike || ''}
-            onChange={(e) => selectStrike(e.target.value ? Number(e.target.value) : null)}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-          >
-            <option value="">Choose a strike price</option>
+          <div className="flex flex-wrap gap-2">
             {strikes.map((strike) => (
-              <option key={strike} value={strike}>
+              <button
+                key={strike}
+                onClick={() => selectStrike(strike)}
+                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                  selectedStrike === strike
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
                 ${strike.toFixed(2)}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
       )}
 
-      {/* Step 3: Option Type Selection (only shown after strike is selected) */}
+      {/* Step 3: Option Type Selection */}
       {selectedStrike && (
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -119,7 +128,7 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
         </div>
       )}
 
-      {/* Step 4: Date Range Selection (only shown after option type is selected) */}
+      {/* Step 4: Date Range Selection */}
       {selectedType && (
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -132,7 +141,7 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
                 type="date"
                 value={startDate || ''}
                 onChange={(e) => {
-                  const newEndDate = endDate || format(new Date('2024-12-12T23:22:42-08:00'), 'yyyy-MM-dd');
+                  const newEndDate = endDate || format(new Date(), 'yyyy-MM-dd');
                   selectDates(e.target.value, newEndDate);
                 }}
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
@@ -144,7 +153,7 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
                 type="date"
                 value={endDate || ''}
                 onChange={(e) => {
-                  const newStartDate = startDate || format(subDays(new Date('2024-12-12T23:22:42-08:00'), 30), 'yyyy-MM-dd');
+                  const newStartDate = startDate || format(subDays(new Date(), 30), 'yyyy-MM-dd');
                   selectDates(newStartDate, e.target.value);
                 }}
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
@@ -154,115 +163,117 @@ export const OptionsSelector: React.FC<OptionsSelectorProps> = ({ symbol }) => {
         </div>
       )}
 
-      {/* Option Price Display (only shown after all selections are made) */}
-      {optionPrice ? (
+      {/* Option Price Display */}
+      {optionPrice && (
         <div className="mt-4 p-4 bg-white shadow rounded-lg overflow-hidden">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Option Price Details</h3>
+          <button
+            onClick={() => setIsPriceExpanded(!isPriceExpanded)}
+            className="w-full flex items-center justify-between text-lg font-medium text-gray-900 mb-4 hover:text-indigo-600 transition-colors"
+          >
+            <span>Option Price Details</span>
+            <ChevronDown 
+              className={`transform transition-transform duration-200 ${
+                isPriceExpanded ? 'rotate-180' : ''
+              }`}
+              size={20}
+            />
+          </button>
           
-          {/* Current Price Summary */}
-          <div className="mb-6 grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Current Price</p>
-              <p className="mt-1 text-lg font-semibold text-gray-900">
-                ${optionPrice.current.lastPrice.toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Volume</p>
-              <p className="mt-1 text-lg font-semibold text-gray-900">
-                {optionPrice.current.volume.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Open Interest</p>
-              <p className="mt-1 text-lg font-semibold text-gray-900">
-                {optionPrice.current.openInterest.toLocaleString()}
-              </p>
-            </div>
-          </div>
+          {isPriceExpanded && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-600">Last Price</p>
+                  <p className="text-lg font-semibold">${optionPrice.current.lastPrice.toFixed(2)}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-600">Volume</p>
+                  <p className="text-lg font-semibold">{optionPrice.current.volume.toLocaleString()}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-600">Open Interest</p>
+                  <p className="text-lg font-semibold">{optionPrice.current.openInterest.toLocaleString()}</p>
+                </div>
+              </div>
 
-          {/* Historical Data Table */}
-          <div className="mt-6">
-            <h4 className="text-md font-medium text-gray-900 mb-3">Price History</h4>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Open
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      High
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Low
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Close
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Volume
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Open Int.
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {optionPrice.history.map((day, index) => (
-                    <tr key={day.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(day.date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        ${day.open.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        ${day.high.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        ${day.low.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        ${day.lastPrice.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {day.volume.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {day.openInterest.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+              {/* Historical Data Table */}
+              <div className="mt-6">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Price History</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Open
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          High
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Low
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Close
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Volume
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Open Int.
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {optionPrice.history.map((day, index) => (
+                        <tr key={day.date} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            {format(new Date(day.date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')), 'MM/dd/yyyy')}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            ${day.open.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            ${day.high.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            ${day.low.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            ${day.lastPrice.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            {day.volume.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                            {day.openInterest.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-          {/* Option Details */}
-          <div className="mt-6 grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Option Type</p>
-              <p className="mt-1 text-sm text-gray-900">{selectedType?.toUpperCase()}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Strike Price</p>
-              <p className="mt-1 text-sm text-gray-900">${selectedStrike?.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Expiration</p>
-              <p className="mt-1 text-sm text-gray-900">{selectedExpiration}</p>
-            </div>
-          </div>
+              {optionPrice.history.length > 0 && (
+                <p className="text-sm text-gray-500 mt-4">
+                  Historical data available from{' '}
+                  {format(new Date(optionPrice.history[0].date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')), 'MMM d, yyyy')}{' '}
+                  to{' '}
+                  {format(new Date(optionPrice.history[optionPrice.history.length - 1].date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')), 'MMM d, yyyy')}
+                </p>
+              )}
+            </>
+          )}
         </div>
-      ) : (
-        <div className="mt-4 p-4 bg-gray-100 rounded-md">
-          <p className="text-sm text-gray-500">
-            Select all options above to view price details
-          </p>
+      )}
+
+      {/* Option Price Charts */}
+      {optionPrice && (
+        <div className="mt-8">
+          <OptionPriceCharts data={optionPrice} />
         </div>
       )}
     </div>
