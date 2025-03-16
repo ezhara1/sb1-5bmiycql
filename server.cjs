@@ -40,15 +40,22 @@ app.get('/api/thetadata/*', async (req, res) => {
       const expirationDates = response.data.response;
       console.log('Expiration dates from ThetaData:', expirationDates);
 
-      // Get current date to filter out past dates
+      // Get current date and date 6 months ago
       const today = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      
       const currentDate = parseInt(today.getFullYear() + 
                                  String(today.getMonth() + 1).padStart(2, '0') + 
                                  String(today.getDate()).padStart(2, '0'));
+      
+      const sixMonthsAgoDate = parseInt(sixMonthsAgo.getFullYear() + 
+                                      String(sixMonthsAgo.getMonth() + 1).padStart(2, '0') + 
+                                      String(sixMonthsAgo.getDate()).padStart(2, '0'));
 
-      // Format dates to YYYY-MM-DD format and filter out past dates
+      // Format dates to YYYY-MM-DD format and filter dates within 6 month range
       const formattedExpirations = expirationDates
-        .filter(exp => exp >= currentDate) // Filter out past dates
+        .filter(exp => exp >= sixMonthsAgoDate) // Include dates from 6 months ago
         .map(exp => {
           const expStr = exp.toString().padStart(8, '0');
           const year = expStr.slice(0, 4);
